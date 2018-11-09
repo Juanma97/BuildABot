@@ -43,8 +43,8 @@ function getPreviousValidIndex(index, length) {
 }
 
 function getNextValidIndex(index, length) {
-  const incrementedIndex = index - 1;
-  return incrementedIndex < 0 ? length - 1 : incrementedIndex;
+  const incrementedIndex = index + 1;
+  return incrementedIndex > length - 1 ? 0 : incrementedIndex;
 }
 
 export default {
