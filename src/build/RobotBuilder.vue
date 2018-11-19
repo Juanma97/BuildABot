@@ -1,5 +1,5 @@
 <template>
-  <div class="content">
+  <div v-if="availableParts" class="content">
     <div class="preview">
       <CollapsibleSection>
       <div class="preview-content">
@@ -41,38 +41,33 @@
       <PartSelector :parts="availableParts.bases" position="bottom"
       @partSelected="part => selectedRobot.bottom=part"/>
     </div>
-    <div>
-        <h1>Cart</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Robot</th>
-                    <th class="cost">Cost</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(robot, index) in cart" :key="index">
-                    <td>{{robot.head.title}}</td>
-                    <td class="cost">{{robot.cost}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
   </div>
 </template>
 
 <script>
-import availableParts from '../data/parts';
 import CreatedHookMixins from './created-hook-mixin';
 import PartSelector from './PartSelector.vue';
 import CollapsibleSection from '../shared/CollapsibleSection.vue';
 
 export default {
   name: 'RobotBuilder',
+  created() {
+    this.$store.dispatch('getParts');
+  },
+  beforeRouteLeave(to, from, next) {
+    if (this.addedToCart) {
+      next(true);
+    } else {
+      /* eslint no-alert: 0 */
+      /* eslint no-restricted-globals: 0 */
+      const response = confirm('You have not added your robot to your cart, are you sure you wante to leave?');
+      next(response);
+    }
+  },
   components: { PartSelector, CollapsibleSection },
   data() {
     return {
-      availableParts,
+      addedToCart: false,
       cart: [],
       selectedRobot: {
         head: {},
@@ -90,11 +85,15 @@ export default {
       const cost = robot.head.cost + robot.armLeft.cost
       + robot.armRight.cost + robot.torso.cost
       + robot.bottom.cost;
-      this.cart.push(Object.assign({}, robot, { cost }));
+      this.$store.commit('addRobotToCart', Object.assign({}, robot, { cost }));
       // Para inmutabilidad, para que no sea la misma instancia que el robot actual
+      this.addedToCart = true;
     },
   },
   computed: {
+    availableParts() {
+      return this.$store.state.parts;
+    },
     headBorderStyle() {
       return {
         border: this.selectedRobot.head.onSale
@@ -213,14 +212,6 @@ export default {
     width: 210px;
     padding: 3px;
     font-size: 16px;
-}
-td, th {
-    text-align: left;
-    padding: 5px;
-    padding-right: 20px;
-}
-.cost {
-    text-align: right;
 }
 .preview {
   position: absolute;
